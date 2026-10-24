@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CareMonitor MVP prototype</title>
+<style>
+:root{--bg:#f4f6f5;--card:#fff;--ink:#0e1b21;--mut:#5b6f75;--line:#d9e3e4;--teal:#137c86;--red:#b5412e;--amb:#c98a00;--grn:#2f8f5b;--redbg:#f8e3df;--ambbg:#fff2cc;--grnbg:#dff1e7;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1b21;--card:#16303a;--ink:#f2f6f6;--mut:#9fb3b8;--line:#2b4a52;--teal:#5cc8c0;--redbg:#4a2620;--ambbg:#4a3d12;--grnbg:#1d4030;--red:#ff8a73;--amb:#f0c24d;--grn:#6fd09b}}
+:root[data-theme="dark"]{--bg:#0e1b21;--card:#16303a;--ink:#f2f6f6;--mut:#9fb3b8;--line:#2b4a52;--teal:#5cc8c0;--redbg:#4a2620;--ambbg:#4a3d12;--grnbg:#1d4030;--red:#ff8a73;--amb:#f0c24d;--grn:#6fd09b}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;height:100%}
+*{box-sizing:border-box}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--card)}
+h1{font-size:18px;margin:0}h1 span{color:var(--teal)}
+nav button,.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer}
+nav button.on,.btn.pri{background:var(--teal);color:#fff;border-color:var(--teal)}
+.note{font-size:12px;color:var(--mut);padding:8px 20px}
+main{padding:16px 20px;max-width:1100px;margin:0 auto}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.tier{font-size:12px;font-weight:700;letter-spacing:.08em;margin:12px 0 6px}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;background:var(--card);width:100%;text-align:left;color:var(--ink);font:inherit}
+.row.sel{outline:2px solid var(--teal)}
+.pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.u{background:var(--redbg);color:var(--red)}.a{background:var(--ambbg);color:var(--amb)}.o{background:var(--grnbg);color:var(--grn)}
+.sub{font-size:13px;color:var(--mut)}
+svg{width:100%;height:auto;display:block}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.phone{width:min(340px,100%);margin:0 auto;border:8px solid var(--ink);border-radius:30px;padding:18px;background:var(--card);min-height:520px}
+.big{font-size:44px;font-weight:700;text-align:center;margin:6px 0}
+.step{display:flex;gap:10px;justify-content:center;align-items:center}
+.step button{font-size:26px;width:56px;height:56px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.res{border-radius:14px;padding:16px;margin-top:14px;text-align:center;font-size:18px;font-weight:600}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);max-width:420px;width:92%}
+textarea{width:100%;min-height:70px;font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px}
+.stars button{font-size:22px;background:none;border:0;cursor:pointer;color:var(--amb)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Care<span>Monitor</span> <span class="sub">MVP prototype</span></h1>
+  <nav><button id="tC" class="on">Coordinator view</button> <button id="tP">Patient app</button> <button id="fb" class="btn">Give feedback</button></nav>
+</header>
+<div class="note">Simulated data. Decision support only: the tool does not diagnose and does not replace the doctor. Tip: record a high reading in the Patient app and watch the Coordinator queue change.</div>
+<main>
+  <section id="vC"><div class="grid"><div class="card"><strong>Today’s attention queue</strong><div class="sub">Sorted by deviation from each patient’s own baseline</div><div id="queue"></div></div><div class="card" id="detail"></div></div></section>
+  <section id="vP" hidden><div class="phone"><div class="sub">Good morning, Aigul K.</div><strong style="font-size:20px">Blood pressure today</strong>
+    <div class="sub" style="margin-top:4px">Systolic (top number)</div><div class="big" id="val">128</div>
+    <div class="step"><button id="m" aria-label="less">−</button><button id="p" aria-label="more">+</button></div>
+    <button class="btn pri" id="save" style="width:100%;margin-top:18px;font-size:18px;padding:14px">Save reading</button>
+    <div id="res"></div><div class="sub" style="margin-top:14px;text-align:center">Three taps. With a Bluetooth monitor the value arrives by itself.</div></div></section>
+</main>
+<dialog id="dlg"><form method="dialog"><strong>Your feedback</strong><p class="sub">How easy was it to find who needs attention?</p><div class="stars" id="st"></div><textarea id="tx" placeholder="What was confusing or missing?"></textarea><div class="acts"><button class="btn pri" id="send" value="x">Send</button><button class="btn" value="c">Close</button></div><p class="sub" id="ty"></p></form></dialog>
+<script>
+const names=[["Aigul K.",[128,126,130,127,129,128,131,127,128,129,126,130,128,127]],["Marat S.",[132,131,134,133,130,135,136,138,141,146,150,153,157,160]],["Zhanna B.",[124,126,125,127,126,125,128,131,134,133,136,138,137,139]],["Nurlan T.",[138,140,139,141,140,138,141,142,139,140,141,140,142,141]],["Saule R.",[120,122,121,123,122,121,120,124,123,122,121,123,122,121]],["Erlan D.",[142,144,143,145,141,144,146,145,143,170,172,178,183,186]]];
+const P=names.map(([n,v],i)=>({id:i,n,v:v.slice(),rev:null,age:[66,71,59,68,63,74][i]}));
+const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]};
+function ev(p){const base=med(p.v.slice(0,10)),cur=Math.round(p.v.slice(-3).reduce((a,b)=>a+b,0)/3),d=cur-base;let t=d>=20||cur>=180?"u":d>=10?"a":"o";return{base,cur,d,t}}
+const L={u:"Urgent",a:"Attention",o:"Stable"};let sel=1;
+function queue(){const q=document.getElementById("queue");q.innerHTML="";["u","a","o"].forEach(t=>{const items=P.map(p=>({p,e:ev(p)})).filter(x=>x.e.t===t).sort((a,b)=>b.e.d-a.e.d);if(!items.length)return;q.insertAdjacentHTML("beforeend",`<div class="tier" style="color:var(--${t==="u"?"red":t==="a"?"amb":"grn"})">${L[t].toUpperCase()} (${items.length})</div>`);items.forEach(({p,e})=>{const b=document.createElement("button");b.className="row"+(p.id===sel?" sel":"");b.innerHTML=`<span><strong>${p.n}</strong><br><span class="sub">${p.rev?p.rev:"avg last 3: "+e.cur+" mmHg, baseline "+e.base}</span></span><span class="pill ${t}">${e.d>=0?"+":""}${e.d}</span>`;b.onclick=()=>{sel=p.id;draw()};q.appendChild(b)})})}
+function chart(p,e){const W=520,H=200,v=p.v,mn=100,mx=200,x=i=>30+i*(W-50)/(v.length-1),y=a=>H-20-(a-mn)*(H-40)/(mx-mn);const pts=v.map((a,i)=>x(i)+","+y(a)).join(" ");return`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Systolic trend vs baseline"><rect x="30" y="${y(e.base+9)}" width="${W-50}" height="${y(e.base-9)-y(e.base+9)}" fill="var(--grnbg)"/><line x1="30" x2="${W-20}" y1="${y(e.base)}" y2="${y(e.base)}" stroke="var(--grn)" stroke-dasharray="4 4"/><polyline points="${pts}" fill="none" stroke="var(--teal)" stroke-width="2.5"/>${v.map((a,i)=>`<circle cx="${x(i)}" cy="${y(a)}" r="3.5" fill="${i>=v.length-3?"var(--red)":"var(--teal)"}"/>`).join("")}<text x="34" y="${y(e.base+9)-4}" font-size="11" fill="var(--mut)">own baseline ${e.base} ±9</text></svg>`}
+function detail(){const p=P[sel],e=ev(p);document.getElementById("detail").innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px"><div><strong style="font-size:18px">${p.n}</strong><div class="sub">Age ${p.age} · hypertension · 14 days of device readings</div></div><span class="pill ${e.t}">${L[e.t]}</span></div>${chart(p,e)}<div class="sub">Last 3 readings average <strong>${e.cur}</strong> mmHg, ${Math.abs(e.d)} ${e.d>=0?"above":"below"} this patient’s own baseline. Time-stamped, device-sourced.</div><div class="acts"><button class="btn pri" data-a="Called patient">Called patient</button><button class="btn" data-a="Sent to doctor">Send to doctor</button><button class="btn" data-a="No action needed">No action needed</button></div><div class="sub" style="margin-top:10px">${p.rev?"Logged: "+p.rev:"Choose an action to log the follow-up."}</div>`;document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{p.rev=b.dataset.a;draw()})}
+function draw(){queue();detail()}draw();
+let val=128;const V=document.getElementById("val");
+document.getElementById("m").onclick=()=>{V.textContent=--val};document.getElementById("p").onclick=()=>{V.textContent=++val};
+document.getElementById("save").onclick=()=>{const me=P[0];me.v.push(val);me.rev=null;const e=ev(me);const r=document.getElementById("res");const m={o:["var(--grnbg)","var(--grn)","Within your usual range. Thank you!"],a:["var(--ambbg)","var(--amb)","Higher than usual. Please measure again in the evening."],u:["var(--redbg)","var(--red)","Much higher than usual. Your clinic has been notified."]}[e.t];r.className="res";r.style.background=m[0];r.style.color=m[1];r.textContent=m[2];sel=0;draw()};
+const sh=c=>{document.getElementById("vC").hidden=c!=="C";document.getElementById("vP").hidden=c!=="P";document.getElementById("tC").classList.toggle("on",c==="C");document.getElementById("tP").classList.toggle("on",c==="P")};
+tC.onclick=()=>sh("C");tP.onclick=()=>sh("P");
+const d=document.getElementById("dlg");let star=0;const st=document.getElementById("st");for(let i=1;i<=5;i++){const b=document.createElement("button");b.type="button";b.textContent="☆";b.onclick=()=>{star=i;[...st.children].forEach((c,k)=>c.textContent=k<i?"★":"☆")};st.appendChild(b)}
+fb.onclick=()=>{document.getElementById("ty").textContent="";d.showModal()};
+send.onclick=e=>{e.preventDefault();document.getElementById("ty").textContent="Thank you. In the test the same questions go to the team’s feedback form (rating "+star+"/5)."};
+</script>
+</body>
+</html>
